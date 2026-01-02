@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 from typing import List, Optional
-from habit_tracker.models import Habit, HabitCompletion, Periodicity
+from models import Habit, HabitCompletion, Periodicity
 
 class HabitRepository:
     """
