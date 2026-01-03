@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional, Tuple
 from models import Habit, HabitCompletion, Periodicity
 
 def calculate_streak(completions: List[HabitCompletion], periodicity: Periodicity) -> int:
@@ -96,6 +96,91 @@ def calculate_streak(completions: List[HabitCompletion], periodicity: Periodicit
     
     else:
         raise ValueError("Invalid periodicity")
+    
+def get_streak_details(completions: List[HabitCompletion], periodicity: Periodicity) -> Tuple[int, Optional[datetime], Optional[datetime]]:
+    """
+    Calculates the longest streak along with the start and end dated of that streak.
+    Args:
+        completions: A list of HabitCompletion objects.
+        periodicity: The periodicity of the habit.
+    Returns:
+        Tuple containing:
+            - int: Length of the longest streak.
+            - Optional[datetime]: Start date of the longest streak (None if no streak).
+            - Optional[datetime]: End date of the longest streak (None if no streak).
+    """
+    if not completions:
+        return 0, None, None
+
+    # Sort completions by date
+    sorted_completions = sorted(completions, key=lambda c: c.completed_at)
+    sorted_dates = sorted(list({c.completed_at.date() for c in sorted_completions}))
+
+    if not sorted_dates:
+        return 0, None, None
+
+    max_streak = 0
+    current_streak = 0
+    current_start = None
+    max_start = None
+    max_end = None
+
+    # We iterate through the sorted unique dates to find the longest sequence
+    for i, date_obj in enumerate(sorted_dates):
+        if i == 0:
+            current_streak = 1
+            current_start = date_obj
+            max_streak = 1
+            max_start = date_obj
+            max_end = date_obj
+            continue
+
+        prev_date = sorted_dates[i-1]
+        
+        # Check continuity based on periodicity
+        is_consecutive = False
+        
+        if periodicity == Periodicity.DAILY:
+            is_consecutive = (date_obj - prev_date).days == 1
+            
+        elif periodicity == Periodicity.WEEKLY:
+            y1, w1, _ = date_obj.isocalendar()
+            y2, w2, _ = prev_date.isocalendar()
+            # Check if year/week are consecutive
+            monday1 = date_obj - timedelta(days=date_obj.weekday())
+            monday2 = prev_date - timedelta(days=prev_date.weekday())
+            is_consecutive = (monday1 - monday2).days == 7
+            
+        elif periodicity == Periodicity.MONTHLY:
+            # Check if year/month are consecutive
+            # (year * 12 + month) - (prev_year * 12 + prev_month) == 1
+            diff = (date_obj.year * 12 + date_obj.month) - (prev_date.year * 12 + prev_date.month)
+            is_consecutive = diff == 1
+
+        if is_consecutive:
+            current_streak += 1
+        else:
+            # Check if we should reset (gap found)
+            # Important: For weekly/monthly, multiple completions in same period are filtered by set(),
+            # so we only see unique periods here. Gaps mean streak breaks.
+            
+            # Compare current streak to max
+            if current_streak > max_streak:
+                max_streak = current_streak
+                max_start = current_start
+                max_end = prev_date # End of the previous sequence
+            
+            # Reset
+            current_streak = 1
+            current_start = date_obj
+    
+    # Final check after loop
+    if current_streak > max_streak:
+        max_streak = current_streak
+        max_start = current_start
+        max_end = sorted_dates[-1]
+
+    return max_streak, max_start, max_end
 
 def longest_ongoing_streak_for_habit(habit: Habit, completions: List[HabitCompletion]) -> int:
     """Wrapper to calculate streak for a specific habit object."""

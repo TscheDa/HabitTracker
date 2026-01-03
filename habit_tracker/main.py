@@ -128,6 +128,7 @@ def cli():
                     "Return a list of all habit completions", # Added for debugging/conpleteness
                     "Return the longest run streak for a given habit",
                     "Return the longest run streak of all defined habits",
+                    "Return the all-time longest streak for each habit", # New option
                     "Back"
                 ]
             ).ask()
@@ -190,11 +191,30 @@ def cli():
                     print("No habits found. Please create a habit first.")
                     continue
 
-                print("Longest streaks for all habits:")
+                print("Longest run streak of all defined habits:")
                 for habit in habits:
                     completions = repo.list_habit_completions(habit.id)
                     longest_streak = analytics.longest_ongoing_streak_for_habit(habit, completions)
-                    print(f"- {habit.name}: {longest_streak}")
+                    print(f"- {habit.name}: {longest_streak} - {habit.periodicity.value}")
+            
+            elif analysis_choice == "Return the all-time longest streak for each habit":
+                habits = repo.list_habits()
+                if not habits:
+                    print("No habits found.")
+                    continue
+
+                print("\nAll-time longest streaks for each habit:")
+                for habit in habits:
+                    completions = repo.list_habit_completions(habit.id)
+                    streak, start, end = analytics.get_streak_details(completions, habit.periodicity)
+                    
+                    if streak > 0:
+                        start_str = start.strftime("%Y-%m-%d") if start else "N/A"
+                        end_str = end.strftime("%Y-%m-%d") if end else "N/A"
+                        print(f"- {habit.name}: {streak} (from {start_str} to {end_str}) - {habit.periodicity.value}")
+                    else:
+                        print(f"- {habit.name}: No streak yet")
+                print("") # Add a blank line for readability
 
             elif analysis_choice == "Back":
                 continue
