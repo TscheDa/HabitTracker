@@ -4,9 +4,9 @@ import random
 from typing import List
 
 # Importing models and database functions
-from models import Habit, HabitCompletion, Periodicity
-from db import HabitRepository
-import analytics
+from habit_tracker.models import Habit, HabitCompletion, Periodicity
+from habit_tracker.db import HabitRepository
+from habit_tracker import analytics
 
 def seed_data(repo: HabitRepository):
     """

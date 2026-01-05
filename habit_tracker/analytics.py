@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
-from models import Habit, HabitCompletion, Periodicity
+from habit_tracker.models import Habit, HabitCompletion, Periodicity
 
-def calculate_streak(completions: List[HabitCompletion], periodicity: Periodicity) -> int:
+def calculate_streak(completions: List[HabitCompletion], periodicity: Periodicity, reference_date: datetime = None) -> int:
     """
     Calculates the current streak for a given list of completions.
     
@@ -15,6 +15,7 @@ def calculate_streak(completions: List[HabitCompletion], periodicity: Periodicit
     Args:
         completions: A list of HabitCompletion objects.
         periodicity: The periodicity of the habit.
+        reference_date: The date to calculate the streak relative to (default to now, used for testing).
 
     Returns:
         int: The length of the streak.
@@ -23,8 +24,12 @@ def calculate_streak(completions: List[HabitCompletion], periodicity: Periodicit
     if not completions:
         return 0 # No completions means no streak
 
-    now = datetime.now()
-    
+    # Use the provided reference date for edge case testing or default to now()
+    if reference_date is None:
+        now = datetime.now()
+    else:
+        now = reference_date
+
     if periodicity == Periodicity.DAILY:
         # Create a set of unique completion dates via set comprehension.
         completed_dates = {c.completed_at.date() for c in completions}
