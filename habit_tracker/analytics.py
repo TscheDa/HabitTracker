@@ -48,7 +48,7 @@ def calculate_streak(completions: List[HabitCompletion], periodicity: Periodicit
             streak += 1
             check_date -= timedelta(days=1)
         return streak
-
+    
     elif periodicity == Periodicity.WEEKLY:
         # Create a set of (year, week) tuples and ignore (_) the weekday of isocalendar().
         completed_weeks = set()

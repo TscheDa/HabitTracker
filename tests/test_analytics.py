@@ -54,7 +54,7 @@ class TestWeeklyStreaks:
         d2 = now - timedelta(days=1) # e.g. Thursday
         d3 = now - timedelta(weeks=1) # e.g. Friday last week
 
-        # Edge case: If 'now' is Monday and '1 days ago' is Sunday, they fall in different weeks.
+        # Edge case: If 'now' is Monday and '1 day ago' is Sunday, they fall in different weeks.
         # But now d2 and d3 are within the same week, so the test still holds.
         
         dates = [d1, d2, d3]
@@ -69,7 +69,7 @@ class TestWeeklyStreaks:
         completions = create_completions(dates)
         assert calculate_streak(completions, Periodicity.WEEKLY) == 1
 
-    def test_streak_over_new_year(self): # FAILED TEST
+    def test_streak_over_new_year(self):
         # Last week of previous year and first week of current year
         d1 = datetime(2023, 12, 31)  # Sunday, last week of 2023
         d2 = datetime(2024, 1, 1)    # Monday, first week of 2024
@@ -89,7 +89,7 @@ class TestMonthlyStreaks:
         completions = create_completions(dates)
         assert calculate_streak(completions, Periodicity.MONTHLY) == 2
 
-    def test_monthly_multiple_in_same_month(self): # FAILED TEST
+    def test_monthly_multiple_in_same_month(self):
         # Multiple completions in the same month should count as one
         d1 = datetime(2024, 6, 5)
         d2 = datetime(2024, 6, 15)
