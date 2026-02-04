@@ -1,7 +1,8 @@
 import sqlite3
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 from habit_tracker.models import Habit, HabitCompletion, Periodicity
+
 
 class HabitRepository:
     """
@@ -50,23 +51,30 @@ class HabitRepository:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             try:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO habits (name, periodicity, created_at)
                     VALUES (?, ?, ?)
-                """, (habit.name, habit.periodicity.value, habit.created_at.isoformat()))
+                """,
+                    (habit.name, habit.periodicity.value, habit.created_at.isoformat()),
+                )
                 conn.commit()
                 return cursor.lastrowid
             except sqlite3.IntegrityError as e:
-                raise ValueError(f"Habit with name '{habit.name}' already exists.") from e
-        
-    def update_habit(self, habit_id: int, new_name: str = None, new_periodicity: Periodicity = None):
+                raise ValueError(
+                    f"Habit with name '{habit.name}' already exists."
+                ) from e
+
+    def update_habit(
+        self, habit_id: int, new_name: str = None, new_periodicity: Periodicity = None
+    ):
         """Updates the name and/or periodicity of a habit.
-        
+
         Args:
             habit_id: ID of the habit to update.
             new_name: New name for the habit (optional).
             new_periodicity: New periodicity for the habit (optional).
-        
+
         Raises:
             ValueError: If the habit ID is not found or if the new name is already taken.
         """
@@ -74,37 +82,37 @@ class HabitRepository:
             cursor = conn.cursor()
             updates = []
             params = []
-            
+
             if new_name:
                 updates.append("name = ?")
                 params.append(new_name)
             if new_periodicity:
                 updates.append("periodicity = ?")
                 params.append(new_periodicity.value)
-            
+
             if not updates:
                 return  # Nothing to update
-            
+
             params.append(habit_id)
             query = f"UPDATE habits SET {', '.join(updates)} WHERE id = ?"
-            
+
             try:
                 cursor.execute(query, tuple(params))
                 conn.commit()
 
                 if cursor.rowcount == 0:
                     raise ValueError(f"Habit with ID '{habit_id}' not found.")
-                
+
             except sqlite3.IntegrityError as e:
                 raise ValueError(f"Habit with name '{new_name}' already exists.") from e
-    
+
     def delete_habit(self, habit_id: int):
         """Deletes a habit and its associated completions from the database."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM habits WHERE id = ?", (habit_id,))
             conn.commit()
-    
+
     def list_habits(self) -> List[Habit]:
         """Retrieves all habits from the database."""
         with self.get_connection() as conn:
@@ -114,22 +122,27 @@ class HabitRepository:
 
             habits = []
             for row in rows:
-                habits.append(Habit(
-                    id=row["id"],
-                    name=row["name"],
-                    periodicity=Periodicity(row["periodicity"]),
-                    created_at=datetime.fromisoformat(row["created_at"])
-                ))
+                habits.append(
+                    Habit(
+                        id=row["id"],
+                        name=row["name"],
+                        periodicity=Periodicity(row["periodicity"]),
+                        created_at=datetime.fromisoformat(row["created_at"]),
+                    )
+                )
             return habits
 
     def add_habit_completion(self, habit_id: int, completed_at: datetime) -> int:
         """Inserts a new habit completion record into the database and returns its ID."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO habit_completions (habit_id, completed_at)
                 VALUES (?, ?)
-            """, (habit_id, completed_at.isoformat()))
+            """,
+                (habit_id, completed_at.isoformat()),
+            )
             conn.commit()
             return cursor.lastrowid
 
@@ -137,22 +150,27 @@ class HabitRepository:
         """Retrieves all completion records for a specific habit."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM habit_completions
                 WHERE habit_id = ?
                 ORDER BY completed_at DESC
-            """, (habit_id,))
+            """,
+                (habit_id,),
+            )
             rows = cursor.fetchall()
 
             completions = []
             for row in rows:
-                completions.append(HabitCompletion(
-                    id=row["id"],
-                    habit_id=row["habit_id"],
-                    completed_at=datetime.fromisoformat(row["completed_at"])
-                ))
+                completions.append(
+                    HabitCompletion(
+                        id=row["id"],
+                        habit_id=row["habit_id"],
+                        completed_at=datetime.fromisoformat(row["completed_at"]),
+                    )
+                )
             return completions
-    
+
     def list_all_habit_completions(self) -> List[HabitCompletion]:
         """Retrieves all habit completion records from the database."""
         with self.get_connection() as conn:
@@ -165,10 +183,11 @@ class HabitRepository:
 
             completions = []
             for row in rows:
-                completions.append(HabitCompletion(
-                    id=row["id"],
-                    habit_id=row["habit_id"],
-                    completed_at=datetime.fromisoformat(row["completed_at"])
-                ))
+                completions.append(
+                    HabitCompletion(
+                        id=row["id"],
+                        habit_id=row["habit_id"],
+                        completed_at=datetime.fromisoformat(row["completed_at"]),
+                    )
+                )
             return completions
-        

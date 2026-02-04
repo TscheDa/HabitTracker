@@ -2,13 +2,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
+
 class Periodicity(Enum):
     """
     Enumeration for habit periodicity to prevent string errors.
     """
+
     DAILY = "DAILY"
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
+
 
 @dataclass
 class Habit:
@@ -21,10 +24,12 @@ class Habit:
         created_at (datetime): Timestamp when the habit was created.
         id (int): Database ID (optional, None if not yet saved).
     """
+
     name: str
     periodicity: Periodicity
     created_at: datetime
     id: int = None
+
 
 @dataclass
 class HabitCompletion:
@@ -36,6 +41,7 @@ class HabitCompletion:
         completed_at (datetime): The date when the habit was completed.
         id (int): Database ID (optional, None if not yet saved).
     """
+
     habit_id: int
     completed_at: datetime
     id: int = None

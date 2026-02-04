@@ -1,12 +1,12 @@
 import questionary
 from datetime import datetime, timedelta
 import random
-from typing import List
 
 # Importing models and database functions
-from habit_tracker.models import Habit, HabitCompletion, Periodicity
+from habit_tracker.models import Habit, Periodicity
 from habit_tracker.db import HabitRepository
 from habit_tracker import analytics
+
 
 def seed_data(repo: HabitRepository):
     """
@@ -15,16 +15,32 @@ def seed_data(repo: HabitRepository):
     """
     existing_habits = repo.list_habits()
     if existing_habits:
-        return # Database already has data, skips seeding.
+        return  # Database already has data, skips seeding.
     print("Seeding database with sample data...")
 
     # 1. Define 5 sample habits:
     sample_habits = [
-        Habit(name="Exercise", periodicity=Periodicity.DAILY, created_at=datetime.now()),
-        Habit(name="Code Python for 30 Mins", periodicity=Periodicity.DAILY, created_at=datetime.now()),
-        Habit(name="Read a Book", periodicity=Periodicity.DAILY, created_at=datetime.now()),
-        Habit(name="Go for a Run", periodicity=Periodicity.WEEKLY, created_at=datetime.now()),
-        Habit(name="Clean Apartment", periodicity=Periodicity.WEEKLY, created_at=datetime.now()),
+        Habit(
+            name="Exercise", periodicity=Periodicity.DAILY, created_at=datetime.now()
+        ),
+        Habit(
+            name="Code Python for 30 Mins",
+            periodicity=Periodicity.DAILY,
+            created_at=datetime.now(),
+        ),
+        Habit(
+            name="Read a Book", periodicity=Periodicity.DAILY, created_at=datetime.now()
+        ),
+        Habit(
+            name="Go for a Run",
+            periodicity=Periodicity.WEEKLY,
+            created_at=datetime.now(),
+        ),
+        Habit(
+            name="Clean Apartment",
+            periodicity=Periodicity.WEEKLY,
+            created_at=datetime.now(),
+        ),
     ]
 
     # 2. Add habits to the database and generate completion data:
@@ -35,26 +51,27 @@ def seed_data(repo: HabitRepository):
         start_date = datetime.now() - timedelta(weeks=4)
 
         # Logic to randomly mark completions
-        for day_offset in range(29): # 4 weeks + 1 day
+        for day_offset in range(29):  # 4 weeks + 1 day
             current_date = start_date + timedelta(days=day_offset)
 
             should_complete = False
             if habit.periodicity == Periodicity.DAILY:
                 # 70% chance to complete daily habits
                 should_complete = random.random() < 0.7
-            
+
             elif habit.periodicity == Periodicity.WEEKLY:
                 # Random chance everyday, but with lower 20 % probability
                 should_complete = random.random() < 0.2
-            
+
             elif habit.periodicity == Periodicity.MONTHLY:
                 # Random chance everyday, but with lower 10 % probability
                 should_complete = random.random() < 0.1
-            
+
             if should_complete:
                 repo.add_habit_completion(habit_id, current_date)
 
     print("Database seeded successfully.")
+
 
 def cli():
     """
@@ -76,8 +93,8 @@ def cli():
                 "Analyze Habits",
                 "Edit a Habit",
                 "Delete a Habit",
-                "Exit"
-            ]
+                "Exit",
+            ],
         ).ask()
 
         if choice == "Create a new Habit":
@@ -87,11 +104,13 @@ def cli():
                 continue
             periodicity_str = questionary.select(
                 "How often do you want to perform this habit?",
-                choices=["DAILY", "WEEKLY", "MONTHLY"]
+                choices=["DAILY", "WEEKLY", "MONTHLY"],
             ).ask()
 
             periodicity = Periodicity(periodicity_str)
-            new_habit = Habit(name=name, periodicity=periodicity, created_at=datetime.now())
+            new_habit = Habit(
+                name=name, periodicity=periodicity, created_at=datetime.now()
+            )
 
             try:
                 repo.add_habit(new_habit)
@@ -108,30 +127,31 @@ def cli():
             # Create a list of habit names for selection
             habit_names = [habit.name for habit in habits]
             selected_habit_name = questionary.select(
-                "Which habit did you complete?",
-                choices=habit_names
+                "Which habit did you complete?", choices=habit_names
             ).ask()
 
             # Find the selected habit with next() for efficiency
             # next() ensures we get the first match or None combined with a generator expression
-            selected_habit = next((h for h in habits if h.name == selected_habit_name), None)
-            
+            selected_habit = next(
+                (h for h in habits if h.name == selected_habit_name), None
+            )
+
             if selected_habit:
                 repo.add_habit_completion(selected_habit.id, datetime.now())
                 print(f"Habit '|{selected_habit.name}|' marked as completed for today.")
-        
+
         elif choice == "Analyze Habits":
             analysis_choice = questionary.select(
                 "What would you like to analyze?",
                 choices=[
                     "Return a list with all currently tracked habits",
                     "Return a list of all habits with the same periodicity",
-                    "Return a list of all habit completions", # Added for debugging/conpleteness
+                    "Return a list of all habit completions",  # Added for debugging/conpleteness
                     "Return the longest run streak for a given habit",
                     "Return the longest run streak of all defined habits",
-                    "Return the all-time longest streak for each habit", # New option
-                    "Back"
-                ]
+                    "Return the all-time longest streak for each habit",  # New option
+                    "Back",
+                ],
             ).ask()
 
             if analysis_choice == "Return a list with all currently tracked habits":
@@ -141,12 +161,17 @@ def cli():
                 else:
                     print("Currently tracked habits:")
                     for habit in habits:
-                        print(f"- {habit.name} (Periodicity: {habit.periodicity.value}, Created At: {habit.created_at.date()})")
-            
-            elif analysis_choice == "Return a list of all habits with the same periodicity":
+                        print(
+                            f"- {habit.name} (Periodicity: {habit.periodicity.value}, Created At: {habit.created_at.date()})"
+                        )
+
+            elif (
+                analysis_choice
+                == "Return a list of all habits with the same periodicity"
+            ):
                 periodicity_str = questionary.select(
                     "Select periodicity to filter habits:",
-                    choices=["DAILY", "WEEKLY", "MONTHLY"]
+                    choices=["DAILY", "WEEKLY", "MONTHLY"],
                 ).ask()
                 periodicity = Periodicity(periodicity_str)
                 habits = repo.list_habits()
@@ -157,7 +182,7 @@ def cli():
                     print(f"Habits with periodicity {periodicity.value}:")
                     for habit in filtered_habits:
                         print(f"- {habit.name} (Created At: {habit.created_at.date()})")
-            
+
             elif analysis_choice == "Return a list of all habit completions":
                 completions = repo.list_all_habit_completions()
                 if not completions:
@@ -165,8 +190,10 @@ def cli():
                 else:
                     print("All habit completions:")
                     for completion in completions:
-                        print(f"- Habit ID: {completion.habit_id}, Completed At: {completion.completed_at}")
-            
+                        print(
+                            f"- Habit ID: {completion.habit_id}, Completed At: {completion.completed_at}"
+                        )
+
             elif analysis_choice == "Return the longest run streak for a given habit":
                 habits = repo.list_habits()
                 if not habits:
@@ -175,18 +202,25 @@ def cli():
 
                 habit_names = [habit.name for habit in habits]
                 selected_habit_name = questionary.select(
-                    "Select a habit to analyze its longest streak:",
-                    choices=habit_names
+                    "Select a habit to analyze its longest streak:", choices=habit_names
                 ).ask()
 
-                selected_habit = next((h for h in habits if h.name == selected_habit_name), None)
-                
+                selected_habit = next(
+                    (h for h in habits if h.name == selected_habit_name), None
+                )
+
                 if selected_habit:
                     completions = repo.list_habit_completions(selected_habit.id)
-                    longest_streak = analytics.longest_ongoing_streak_for_habit(selected_habit, completions)
-                    print(f"The longest streak for habit '|{selected_habit.name}|' is {longest_streak}.")
-            
-            elif analysis_choice == "Return the longest run streak of all defined habits":
+                    longest_streak = analytics.longest_ongoing_streak_for_habit(
+                        selected_habit, completions
+                    )
+                    print(
+                        f"The longest streak for habit '|{selected_habit.name}|' is {longest_streak}."
+                    )
+
+            elif (
+                analysis_choice == "Return the longest run streak of all defined habits"
+            ):
                 habits = repo.list_habits()
                 if not habits:
                     print("No habits found. Please create a habit first.")
@@ -195,9 +229,13 @@ def cli():
                 print("Longest run streak of all defined habits:")
                 for habit in habits:
                     completions = repo.list_habit_completions(habit.id)
-                    longest_streak = analytics.longest_ongoing_streak_for_habit(habit, completions)
-                    print(f"- {habit.name}: {longest_streak} - {habit.periodicity.value}")
-            
+                    longest_streak = analytics.longest_ongoing_streak_for_habit(
+                        habit, completions
+                    )
+                    print(
+                        f"- {habit.name}: {longest_streak} - {habit.periodicity.value}"
+                    )
+
             elif analysis_choice == "Return the all-time longest streak for each habit":
                 habits = repo.list_habits()
                 if not habits:
@@ -207,19 +245,23 @@ def cli():
                 print("\nAll-time longest streaks for each habit:")
                 for habit in habits:
                     completions = repo.list_habit_completions(habit.id)
-                    streak, start, end = analytics.get_streak_details(completions, habit.periodicity)
-                    
+                    streak, start, end = analytics.get_streak_details(
+                        completions, habit.periodicity
+                    )
+
                     if streak > 0:
                         start_str = start.strftime("%Y-%m-%d") if start else "N/A"
                         end_str = end.strftime("%Y-%m-%d") if end else "N/A"
-                        print(f"- {habit.name}: {streak} (from {start_str} to {end_str}) - {habit.periodicity.value}")
+                        print(
+                            f"- {habit.name}: {streak} (from {start_str} to {end_str}) - {habit.periodicity.value}"
+                        )
                     else:
                         print(f"- {habit.name}: No streak yet")
-                print("") # Add a blank line for readability
+                print("")  # Add a blank line for readability
 
             elif analysis_choice == "Back":
                 continue
-        
+
         elif choice == "Edit a Habit":
             habits = repo.list_habits()
             if not habits:
@@ -228,12 +270,13 @@ def cli():
 
             habit_names = [habit.name for habit in habits]
             selected_habit_name = questionary.select(
-                "Select a habit to edit:",
-                choices=habit_names
+                "Select a habit to edit:", choices=habit_names
             ).ask()
 
-            selected_habit = next((h for h in habits if h.name == selected_habit_name), None)
-            
+            selected_habit = next(
+                (h for h in habits if h.name == selected_habit_name), None
+            )
+
             if selected_habit:
                 edit_choice = questionary.select(
                     "What would you like to edit?",
@@ -241,15 +284,17 @@ def cli():
                         "Name",
                         "Periodicity",
                         "Both Name and Periodicity",
-                        "Cancel"
-                    ]
+                        "Cancel",
+                    ],
                 ).ask()
 
                 new_name = None
                 new_periodicity = None
 
                 if edit_choice in ["Name", "Both Name and Periodicity"]:
-                    new_name = questionary.text("Enter the new name for the habit:").ask()
+                    new_name = questionary.text(
+                        "Enter the new name for the habit:"
+                    ).ask()
                     if not new_name:
                         print("Habit name cannot be empty.")
                         continue
@@ -257,13 +302,17 @@ def cli():
                 if edit_choice in ["Periodicity", "Both Name and Periodicity"]:
                     new_periodicity_str = questionary.select(
                         f"Select new periodicity for '|{selected_habit.name}|' (current: {selected_habit.periodicity.value}):",
-                        choices=["DAILY", "WEEKLY", "MONTHLY"]
+                        choices=["DAILY", "WEEKLY", "MONTHLY"],
                     ).ask()
                     new_periodicity = Periodicity(new_periodicity_str)
 
                 if edit_choice != "Cancel" and (new_name or new_periodicity):
                     try:
-                        repo.update_habit(selected_habit.id, new_name=new_name, new_periodicity=new_periodicity)
+                        repo.update_habit(
+                            selected_habit.id,
+                            new_name=new_name,
+                            new_periodicity=new_periodicity,
+                        )
                         print(f"Habit '|{selected_habit.name}|' updated successfully!")
                     except ValueError as e:
                         print(f"Update failed: {e}")
@@ -280,20 +329,23 @@ def cli():
 
             habit_names = [habit.name for habit in habits]
             selected_habit_name = questionary.select(
-                "Select a habit to delete:",
-                choices=habit_names
+                "Select a habit to delete:", choices=habit_names
             ).ask()
 
-            selected_habit = next((h for h in habits if h.name == selected_habit_name), None)
-            
+            selected_habit = next(
+                (h for h in habits if h.name == selected_habit_name), None
+            )
+
             if selected_habit:
                 repo.delete_habit(selected_habit.id)
-                print(f"Habit '|{selected_habit.name}|' and its completions have been deleted.")
+                print(
+                    f"Habit '|{selected_habit.name}|' and its completions have been deleted."
+                )
 
         elif choice == "Exit":
             print("Exiting Habit Tracker CLI. Goodbye!")
             break
 
+
 if __name__ == "__main__":
     cli()
-
