@@ -74,6 +74,7 @@ def cli():
                 "Create a new Habit",
                 "Check off a Habit as completed",
                 "Analyze Habits",
+                "Edit a Habit",
                 "Delete a Habit",
                 "Exit"
             ]
@@ -218,6 +219,58 @@ def cli():
 
             elif analysis_choice == "Back":
                 continue
+        
+        elif choice == "Edit a Habit":
+            habits = repo.list_habits()
+            if not habits:
+                print("No habits found. Please create a habit first.")
+                continue
+
+            habit_names = [habit.name for habit in habits]
+            selected_habit_name = questionary.select(
+                "Select a habit to edit:",
+                choices=habit_names
+            ).ask()
+
+            selected_habit = next((h for h in habits if h.name == selected_habit_name), None)
+            
+            if selected_habit:
+                edit_choice = questionary.select(
+                    "What would you like to edit?",
+                    choices=[
+                        "Name",
+                        "Periodicity",
+                        "Both Name and Periodicity",
+                        "Cancel"
+                    ]
+                ).ask()
+
+                new_name = None
+                new_periodicity = None
+
+                if edit_choice in ["Name", "Both Name and Periodicity"]:
+                    new_name = questionary.text("Enter the new name for the habit:").ask()
+                    if not new_name:
+                        print("Habit name cannot be empty.")
+                        continue
+
+                if edit_choice in ["Periodicity", "Both Name and Periodicity"]:
+                    new_periodicity_str = questionary.select(
+                        f"Select new periodicity for '|{selected_habit.name}|' (current: {selected_habit.periodicity.value}):",
+                        choices=["DAILY", "WEEKLY", "MONTHLY"]
+                    ).ask()
+                    new_periodicity = Periodicity(new_periodicity_str)
+
+                if edit_choice != "Cancel" and (new_name or new_periodicity):
+                    try:
+                        repo.update_habit(selected_habit.id, new_name=new_name, new_periodicity=new_periodicity)
+                        print(f"Habit '|{selected_habit.name}|' updated successfully!")
+                    except ValueError as e:
+                        print(f"Update failed: {e}")
+                elif edit_choice == "Cancel":
+                    print("Edit cancelled.")
+                else:
+                    print("No changes made.")
 
         elif choice == "Delete a Habit":
             habits = repo.list_habits()

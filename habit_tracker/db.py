@@ -58,6 +58,45 @@ class HabitRepository:
                 return cursor.lastrowid
             except sqlite3.IntegrityError as e:
                 raise ValueError(f"Habit with name '{habit.name}' already exists.") from e
+        
+    def update_habit(self, habit_id: int, new_name: str = None, new_periodicity: Periodicity = None):
+        """Updates the name and/or periodicity of a habit.
+        
+        Args:
+            habit_id: ID of the habit to update.
+            new_name: New name for the habit (optional).
+            new_periodicity: New periodicity for the habit (optional).
+        
+        Raises:
+            ValueError: If the habit ID is not found or if the new name is already taken.
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            updates = []
+            params = []
+            
+            if new_name:
+                updates.append("name = ?")
+                params.append(new_name)
+            if new_periodicity:
+                updates.append("periodicity = ?")
+                params.append(new_periodicity.value)
+            
+            if not updates:
+                return  # Nothing to update
+            
+            params.append(habit_id)
+            query = f"UPDATE habits SET {', '.join(updates)} WHERE id = ?"
+            
+            try:
+                cursor.execute(query, tuple(params))
+                conn.commit()
+
+                if cursor.rowcount == 0:
+                    raise ValueError(f"Habit with ID '{habit_id}' not found.")
+                
+            except sqlite3.IntegrityError as e:
+                raise ValueError(f"Habit with name '{new_name}' already exists.") from e
     
     def delete_habit(self, habit_id: int):
         """Deletes a habit and its associated completions from the database."""
@@ -132,6 +171,4 @@ class HabitRepository:
                     completed_at=datetime.fromisoformat(row["completed_at"])
                 ))
             return completions
-
-
         
