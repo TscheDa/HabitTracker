@@ -53,6 +53,7 @@ The application provides an interactive CLI menu with the following options:
   - List all completions.
   - View current streaks for each habit.
   - View all-time longest streaks for each habit.
+- **Edit a Habit**: Update the name and/or periodicity of a habit.
 - **Delete a Habit**: Remove a habit and its associated completions.
 - **Exit**: Quit the application.
 
@@ -67,6 +68,7 @@ The application provides an interactive CLI menu with the following options:
 ```
 HabitTracker/
 ├── README.md
+├── requirements-dev.txt
 ├── requirements.txt
 ├── habit_tracker/
 │   ├── __init__.py
@@ -77,6 +79,7 @@ HabitTracker/
 └── tests/
     ├── __init__.py
     ├── test_analytics.py  # Unit tests for analytics
+    ├── test_db.py  # Unit tests for database operations
 ```
 
 - **models.py**: Defines data classes for `Habit`, `HabitCompletion`, and `Periodicity` enum.
